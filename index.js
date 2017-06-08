@@ -12,7 +12,7 @@ class PEAnalytics {
   // write an event row
   async logEvent (data) {
     // parse user agent
-    var userAgentParsed = data.useragent ? useragent.parse(data.useragent) : {}
+    var userAgentParsed = data.userAgent ? useragent.parse(data.userAgent) : {}
 
     // construct row
     var row = {
