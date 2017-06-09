@@ -94,16 +94,21 @@ class PEAnalytics {
   }
 
   // count an event range
-  async countEvents ({unique, groupByDay, where} = {}) {
+  async countEvents ({unique, groupBy, where} = {}) {
     where = where || '1 = 1'
     // TODO unique
     if (unique) {
-      if (groupByDay) {
+      if (groupBy) {
+        let column = groupBy
+        if (groupBy === 'date') {
+          column = `DATE(events.date) AS date`
+          groupBy = `strftime('%d-%m-%Y', date)`
+        }
         return this.db.all(`
-          SELECT COUNT(DISTINCT session) AS count, DATE(events.date) AS date FROM events
+          SELECT COUNT(DISTINCT session) AS count, ${column} FROM events
             LEFT JOIN events_extra ON events_extra.event_id = events.id
             WHERE ${where} AND session IS NOT NULL
-            GROUP BY strftime('%d-%m-%Y', date)
+            GROUP BY ${groupBy}
         `)
       } else {
         let res = await this.db.get(`
@@ -114,12 +119,17 @@ class PEAnalytics {
         return res.count
       }
     } else {
-      if (groupByDay) {
+      if (groupBy) {
+        let column = groupBy
+        if (groupBy === 'date') {
+          column = `DATE(events.date) AS date`
+          groupBy = `strftime('%d-%m-%Y', date)`
+        }
         return this.db.all(`
-          SELECT COUNT(DISTINCT id) AS count, DATE(events.date) AS date FROM events
+          SELECT COUNT(DISTINCT id) AS count, ${column} FROM events
             LEFT JOIN events_extra ON events_extra.event_id = events.id
             WHERE ${where}
-            GROUP BY strftime('%d-%m-%Y', date)
+            GROUP BY ${groupBy}
         `)
       } else {
         let res = await this.db.get(`
@@ -133,13 +143,13 @@ class PEAnalytics {
   }
 
   // sugar to count visit events
-  async countVisits ({unique, groupByDay, where} = {}) {
+  async countVisits ({unique, groupBy, where} = {}) {
     if (where) {
       where = `event = 'visit' AND ${where}`
     } else {
       where = `event = 'visit'`
     }
-    return this.countEvents({unique, groupByDay, where})
+    return this.countEvents({unique, groupBy, where})
   }
 }
 

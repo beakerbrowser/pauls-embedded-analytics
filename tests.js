@@ -94,20 +94,36 @@ test('countEvents / countVisits', async t => {
   t.is(await analytics.countVisits({where: `date > '${OLD_DATE}'`}), 8)
 })
 
-test('countEvents / countVisits group by day', async t => {
+test('countEvents / countVisits group by', async t => {
   var res
-  res = await analytics.countEvents({groupByDay: true})
+  res = await analytics.countEvents({groupBy: 'date'})
   t.is(res.length, 2)
   t.is(res[0].count, 1)
   t.is(res[0].date, OLD_DATE.split(' ')[0])
   t.is(res[1].count, 9)
 
   var res
-  res = await analytics.countVisits({groupByDay: true})
+  res = await analytics.countVisits({groupBy: 'date'})
   t.is(res.length, 2)
   t.is(res[0].count, 1)
   t.is(res[0].date, OLD_DATE.split(' ')[0])
   t.is(res[1].count, 8)
+
+  var res
+  res = await analytics.countEvents({groupBy: 'url'})
+  t.deepEqual(res, [
+    { count: 2, url: '/bar.html' },
+    { count: 2, url: '/foo.html' },
+    { count: 6, url: '/index.html' }
+  ])
+
+  var res
+  res = await analytics.countVisits({groupBy: 'url'})
+  t.deepEqual(res, [
+    { count: 2, url: '/bar.html' },
+    { count: 2, url: '/foo.html' },
+    { count: 5, url: '/index.html' }
+  ])
 })
 
 test('countEvents / countVisits unique', async t => {
@@ -119,18 +135,34 @@ test('countEvents / countVisits unique', async t => {
 
 test('countEvents / countVisits unique, group by day', async t => {
   var res
-  res = await analytics.countEvents({unique: true, groupByDay: true})
+  res = await analytics.countEvents({unique: true, groupBy: 'date'})
   t.is(res.length, 2)
   t.is(res[0].count, 1)
   t.is(res[0].date, OLD_DATE.split(' ')[0])
   t.is(res[1].count, 2)
 
   var res
-  res = await analytics.countVisits({unique: true, groupByDay: true})
+  res = await analytics.countVisits({unique: true, groupBy: 'date'})
   t.is(res.length, 2)
   t.is(res[0].count, 1)
   t.is(res[0].date, OLD_DATE.split(' ')[0])
   t.is(res[1].count, 2)
+
+  var res
+  res = await analytics.countEvents({unique: true, groupBy: 'url'})
+  t.deepEqual(res, [
+    { count: 1, url: '/bar.html' },
+    { count: 1, url: '/foo.html' },
+    { count: 2, url: '/index.html' }
+  ])
+
+  var res
+  res = await analytics.countVisits({unique: true, groupBy: 'url'})
+  t.deepEqual(res, [
+    { count: 1, url: '/bar.html' },
+    { count: 1, url: '/foo.html' },
+    { count: 2, url: '/index.html' }
+  ])
 })
 
 test('listEvents / listVisits', async t => {

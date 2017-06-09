@@ -36,7 +36,7 @@ await analytics.listVisits({
 })
 await analytics.countEvents({
   unique: false, // unique visits only (according to session)? default false
-  groupByDay: false, // output a list of visits grouped by day? default false (one count)
+  groupBy: 'url' | 'date' | false, // outputs as eg [{url:, count}], [{date:, count:}], or just a number
   where: `date BETWEEN date('now', '-1 day') AND date('now')` // WHERE clause
 })
 await analytics.countVisits({
