@@ -21,6 +21,7 @@ class PEAnalytics {
       url: data.url,
       domain: data.domain || this.domain,
       session: data.session,
+      referer: data.referer,
       isMobile: userAgentParsed.isMobile,
       isDesktop: userAgentParsed.isDesktop,
       isBot: userAgentParsed.isBot,

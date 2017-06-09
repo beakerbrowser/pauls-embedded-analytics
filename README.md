@@ -19,6 +19,7 @@ await analytics.logEvent({
   url: '/index.html', // where did they visit
   domain: 'myothersite.com', // (optional) override the default domain
   session: '12345', // (optional) user ID, should be set using a cookie or similar
+  referer: 'google.com', // (optional) referer header
   userAgent: 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79..', // (optional) user agent, lets us parse the browser, os, etc
   ip: '255.255.255.255', // (optional) user IP address
   extra: {foo: 'bar'}, // (optional) additional data that should be stored
@@ -51,6 +52,7 @@ Note, the WHERE clause in any query have the following fields available:
  - url
  - domain
  - session
+ - referer
  - ip
  - isMobile
  - isDesktop
