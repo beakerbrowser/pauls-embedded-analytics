@@ -152,6 +152,42 @@ class PEAnalytics {
     }
     return this.countEvents({unique, groupBy, where})
   }
+
+  // upsert cohort data
+  async updateCohort (campaign, {cohort, subject, state}) {
+    // fetch current record
+    var record = await this.db.get(`
+      SELECT * FROM cohorts WHERE campaign = ? AND subject = ?
+    `, [campaign, subject])
+
+    // construct values
+    var values
+    if (record) {
+      values = [campaign, defined(cohort) ? cohort : record.cohort, subject, defined(state) ? state : record.state]
+    } else {
+      values = [campaign, cohort, subject, state]
+    }
+
+    // update
+    return this.db.run(`
+      INSERT OR REPLACE INTO cohorts (campaign, cohort, subject, state)
+        VALUES (?, ?, ?, ?)
+    `, values)
+  }
+
+  // query cohort data
+  async countCohortStates (campaign) {
+    return this.db.all(`
+      SELECT cohort, state, COUNT(DISTINCT subject) AS count FROM cohorts
+        WHERE campaign = ?
+        GROUP BY cohort, state
+    `, [campaign])
+  }
+}
+
+// helpers
+function defined (v) {
+  return typeof v !== 'undefined'
 }
 
 module.exports = PEAnalytics

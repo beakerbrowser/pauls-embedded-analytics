@@ -201,3 +201,45 @@ test('listEvents / listVisits', async t => {
   t.is((await analytics.listVisits({where: `date = '${OLD_DATE}'`}))[0].date, OLD_DATE, 'listVisits() date filter')
   t.is((await analytics.listVisits({where: `events_extra.key = 'foo' AND events_extra.value = 'asdf'`}))[0].extra.foo, 'asdf', 'listEvents() extra filter')
 })
+
+test('cohorts', async t => {
+  var counts
+
+  // 2 cohorts, each with 3 in state 1, 2 in state 2, and 1 in state 1
+  await analytics.updateCohort('test', {cohort: 1, subject: 1, state: 1})
+  await analytics.updateCohort('test', {cohort: 1, subject: 2, state: 1})
+  await analytics.updateCohort('test', {cohort: 1, subject: 3, state: 1})
+  await analytics.updateCohort('test', {cohort: 1, subject: 4, state: 2})
+  await analytics.updateCohort('test', {cohort: 1, subject: 5, state: 2})
+  await analytics.updateCohort('test', {cohort: 1, subject: 6, state: 3})
+  await analytics.updateCohort('test', {cohort: 2, subject: 7, state: 1})
+  await analytics.updateCohort('test', {cohort: 2, subject: 8, state: 1})
+  await analytics.updateCohort('test', {cohort: 2, subject: 9, state: 1})
+  await analytics.updateCohort('test', {cohort: 2, subject: 10, state: 2})
+  await analytics.updateCohort('test', {cohort: 2, subject: 11, state: 2})
+  await analytics.updateCohort('test', {cohort: 2, subject: 12, state: 3})
+
+  counts = await analytics.countCohortStates('test')
+  t.deepEqual(counts, [
+    { cohort: '1', state: '1', count: 3 },
+    { cohort: '1', state: '2', count: 2 },
+    { cohort: '1', state: '3', count: 1 },
+    { cohort: '2', state: '1', count: 3 },
+    { cohort: '2', state: '2', count: 2 },
+    { cohort: '2', state: '3', count: 1 }
+  ])
+
+  // modify some states
+  await analytics.updateCohort('test', {cohort: 1, subject: 4, state: 1}) // 2 -> 1
+  await analytics.updateCohort('test', {cohort: 2, subject: 11, state: 3}) // 2 -> 3
+
+  counts = await analytics.countCohortStates('test')
+  t.deepEqual(counts, [
+    { cohort: '1', state: '1', count: 4 },
+    { cohort: '1', state: '2', count: 1 },
+    { cohort: '1', state: '3', count: 1 },
+    { cohort: '2', state: '1', count: 3 },
+    { cohort: '2', state: '2', count: 1 },
+    { cohort: '2', state: '3', count: 2 }
+  ])
+})

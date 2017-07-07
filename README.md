@@ -13,6 +13,9 @@ var analytics = new PEAnalytics({
   domain: 'mysite.com'
 })
 
+// event tracking
+// =
+
 // add visits to the DB
 await analytics.logEvent({
   event: 'visit', // (optional) set the event type, defaults to 'visit'
@@ -26,7 +29,7 @@ await analytics.logEvent({
   note: 'This is important!' // (optional) a note to be attached to the event
 })
 
-// query the DB
+// query
 await analytics.listEvents({
   where: `date BETWEEN date('now', '-1 day') AND date('now')`, // WHERE clause
   limit: 100,
@@ -43,6 +46,20 @@ await analytics.countEvents({
 await analytics.countVisits({
   // same params as countEvents but filters to event='visit'
 })
+
+// cohort tracking
+// =
+
+// track state in the active_users campaign
+// (in this example, cohort 2 might mean '2nd week since launch', and state 3 might me 'is active')
+await analytics.updateCohort('active_users', {
+  cohort: 2, // 2nd week since launch
+  subject: user.id,
+  state: 3 // is active
+})
+
+// query
+await analytics.countCohortStates('active_users')
 ```
 
 Note, the WHERE clause in any query have the following fields available:
@@ -64,6 +81,47 @@ Note, the WHERE clause in any query have the following fields available:
  - events_extra.key / events_extra.value
 
 These are also the fields output by a list call.
+
+### Cohorts
+
+Cohort tracking is designed to help questions about user retention. A cohort should be identified by a value specified by the application. Each cohort specifies a grouping of users. A simple example cohort id would be the year + the week of the year, eg 201701 for the first week of 2017.
+
+The update method tracks the state of a `subject` within the cohort. State may be anything, but a recommended scheme would be a set of enums. In hashbase's `active_users` campaign, we use `1` for registered, `2` for "activated," and `3` for active in the last 2 weeks.
+
+When a user registers, we run:
+
+```js
+analytics.updateCohort('active_users', {
+  cohort: getUserCohort(user),
+  subject: user.id,
+  state: 1 // is registered
+})
+```
+
+When they upload an archive, we run:
+
+```js
+analytics.updateCohort('active_users', {
+  cohort: getUserCohort(user),
+  subject: user.id,
+  state: 3 // is active
+})
+```
+
+And every week we do a full sweep of the users table, where we set the state to `1`, `2`, or `3` based on the state of their archives.
+
+The `countCohortStates` method outputs an array which looks like this:
+
+```js
+[ { cohort: '201701', state: '1', count: 3 },
+  { cohort: '201701', state: '2', count: 2 },
+  { cohort: '201701', state: '3', count: 1 },
+  { cohort: '201702', state: '1', count: 3 },
+  { cohort: '201702', state: '2', count: 2 },
+  { cohort: '201702', state: '3', count: 1 } ]
+```
+
+For hashbase, these numbers are actually cumulative. 50 users are in the registered state, but activated and active users are also registered, so there's actually 50+30+15 = 95 registered users.
 
 ## Why?
 
